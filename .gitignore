@@ -1,0 +1,7 @@
+*.pyc
+*.csv
+*.txt
+*.xlsx
+data 
+.DS_Store
+.ipynb_checkpoints
