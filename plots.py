@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+from scipy import stats
+import numpy as np
 
 
 def plot_params():
@@ -53,6 +54,32 @@ def plot_one_line(df, col1, y_title1, xlim):
 
 	df[col1].plot(marker = 'o',linestyle = '-', label = y_title1, xlim = xlim)
 	plt.legend(fontsize = label_size)
+
+
+def plot_six_lines(df, col1, col2, col3, col4, col5, col6, y_title1, y_title2, y_title3, y_title4, y_title5, y_title6, xlim):
+    plt.figure(facecolor='w', figsize = (15,10))
+    a, b, axes, label_size = plot_params()
+
+    df[col1].plot(marker = 'o',linestyle = '-', label = y_title1, xlim = xlim)
+    df[col2].plot(marker = 'o',linestyle = '-', label = y_title2, xlim = xlim)
+    df[col3].plot(marker = 'o',linestyle = '-', label = y_title3, xlim = xlim)
+    df[col4].plot(marker = 'o',linestyle = '-', label = y_title4, xlim = xlim)
+    df[col5].plot(marker = 'o',linestyle = '-', label = y_title5, xlim = xlim)
+    df[col6].plot(marker = 'o',linestyle = '-', label = y_title6, xlim = xlim)
+    plt.legend(fontsize = label_size)
+
+
+def plot_hist(values, title, ):
+    plt.figure(figsize = (10,5), facecolor='w')
+    a, b, axes, label_size = plot_params()
+    h = sorted(values)  
+    fit = stats.norm.pdf(h, np.mean(h), np.std(h))  
+    plt.plot(h, fit, '-o')
+    plt.title(title, size = label_size)
+    min1 = min(values)
+    max1 = max(values)
+    plt.hist(h)  
+    plt.show()  
 
 
 
