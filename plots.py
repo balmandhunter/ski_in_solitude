@@ -13,7 +13,7 @@ def plot_params():
 def plot_ticket_sales(df):
     plt.figure(facecolor='w', figsize = (15,20))
     a, b, axes, label_size = plot_params()
-    
+
     ax1 = plt.subplot(311)
     df['tickets'].plot(marker = '.',linestyle = '-', label = 'Total Tickets Sold')
     plt.ylabel('Number of Tickets', size = label_size)
@@ -72,14 +72,14 @@ def plot_six_lines(df, col1, col2, col3, col4, col5, col6, y_title1, y_title2, y
 def plot_hist(values, title, ):
     plt.figure(figsize = (10,5), facecolor='w')
     a, b, axes, label_size = plot_params()
-    h = sorted(values)  
-    fit = stats.norm.pdf(h, np.mean(h), np.std(h))  
+    h = sorted(values)
+    fit = stats.norm.pdf(h, np.mean(h), np.std(h))
     plt.plot(h, fit, '-o')
     plt.title(title, size = label_size)
     min1 = min(values)
     max1 = max(values)
-    plt.hist(h)  
-    plt.show()  
+    plt.hist(h)
+    plt.show()
 
 
 
