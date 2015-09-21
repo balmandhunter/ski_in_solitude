@@ -82,6 +82,59 @@ def plot_hist(values, title, ):
     plt.show()
 
 
+def make_bar_chart(crowd, y_label, dates):
+    a, b, label_size = plot_params()
+    N = len(crowd)
+
+    ind = np.arange(N)  # the x locations for the groups
+    width = 0.35      # the width of the bars
+
+    fig, ax = plt.subplots(figsize=(20, 10), facecolor='white', frameon=False)
+    #plt.box(on='off')
+    rects1 = ax.bar(ind, crowd, width, color='#bdbdbd', edgecolor = "none")
+
+    # add some text for labels, title and axes ticks
+    ax.set_ylabel(y_label, size = label_size)
+    ax.set_title(' ')
+    ax.set_xticks(ind + width)
+    #tick_labels = dates.tolist()
+    #ax.set_xticklabels(tick_labels)
+    ax.grid(False)
+    #plt.ylim([0,18])
+    #make the border lines lighter
+    [i.set_linewidth(0.1) for i in ax.spines.itervalues()]
+
+    #remove the y axis
+    #frame1 = plt.gca()
+    #frame1.axes.get_yaxis().set_visible(False)
+
+    #draw legend
+    #ax.legend( (rects1[0], rects2[0]), ('Base Features', 'Best Features') , loc = 'best', fontsize = label_size, frameon=False)
+    return fig
+
+
+def plot_fitted_and_ref_vs_time(df, ref_column):
+    plt.figure(facecolor='w', figsize = (15,10))
+    a, b, axes, label_size = plot_params()
+    df[ref_column].plot(marker = '.',linestyle = '-', label = 'Reference Data')
+    df.cv_lin_pred.plot(marker = '.',linestyle = '-', label = 'CV Predicted Data')
+    df.lasso_pred.plot(marker = '.',linestyle = '-', label = 'Lasso CV Predicted Data')
+
+    #df.model_pred.plot(marker = '.',linestyle = '-', label = 'Linear Predicted Data')
+    #axes.set_ylim([0,3])
+    plt.legend(fontsize = label_size)
+    plt.ylabel('Normalized Skier Numbers', size = label_size)
+    plt.xlabel('Date', size = label_size)
+
+
+def fitted_vs_ref_plot(df, ref_column):
+    plt.figure(facecolor='w', figsize = (8,8))
+    a, b, axes, label_size = plot_params()
+    plt.plot(df[ref_column], df.model_pred, linestyle = '', marker = '.', alpha = 0.3)
+    plt.xlabel('Skier Visits', size = label_size)
+    plt.ylabel('Predicted Skier Visits', size = label_size)
+    plt.plot([0, df.model_pred.max()], [0,df.model_pred.max()])
+    #axes.set_ylim([-20,100])
 
 if __name__ == "__main__":
     import sys
