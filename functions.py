@@ -228,18 +228,17 @@ def find_lag_integral(df, time_range, data_col):
     return area_curve
 
 
-def find_season_total_snowfall(df_for):
+def find_season_total_snowfall(df):
     count = 0
     tot_snow = []
-    for idx, row in df_for.iterrows():
+    for idx, row in df.iterrows():
         try:
-            if (idx - df_for.index[count -1]).days < 30:
-                tot_snow.append(row.new_24 + tot_snow[count-1])
+            tot_snow.append(round(row.new_24 + tot_snow[count-1],1))
         except:
-            tot_snow.append(0)
+            tot_snow.append(round(row.new_24,1))
         count += 1
-    df_for['tot_snow'] = tot_snow
-    return df_for
+    df['tot_snow'] = tot_snow
+    return df
 
 
 
