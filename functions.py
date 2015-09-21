@@ -217,6 +217,34 @@ def make_spring_break_col(df, holiday, hol_name):
     df['spring_break'] = is_holiday
     return df
 
+
+def find_lag_integral(df, time_range, data_col):
+    area_curve = []
+    for i in range(0,time_range):
+        area_curve.append(np.nan)
+    for i in range(time_range,len(df[data_col])):
+        top = i - time_range
+        area_curve.append(df.new_24[top:i].sum())
+    return area_curve
+
+
+def find_season_total_snowfall(df_for):
+    count = 0
+    tot_snow = []
+    for idx, row in df_for.iterrows():
+        try:
+            if (idx - df_for.index[count -1]).days < 30:
+                tot_snow.append(row.new_24 + tot_snow[count-1])
+        except:
+            tot_snow.append(0)
+        count += 1
+    df_for['tot_snow'] = tot_snow
+    return df_for
+
+
+
+
+
 if __name__ == "__main__":
     import sys
     fib(int(sys.argv[1]))
