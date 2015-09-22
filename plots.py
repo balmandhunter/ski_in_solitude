@@ -115,11 +115,11 @@ def make_bar_chart(crowd, y_label, dates):
 
 
 def plot_fitted_and_ref_vs_time(df, ref_column, xlim):
-    plt.figure(facecolor='w', figsize = (15,10))
+    plt.figure(facecolor='w', figsize = (10,3))
     a, b, axes, label_size = plot_params()
     df[ref_column].plot(marker = '.',linestyle = '-', label = 'Reference Data', xlim = xlim)
     #df.cv_lin_pred.plot(marker = '.',linestyle = '-', label = 'CV Predicted Data')
-    df.lasso_pred.plot(marker = '.',linestyle = '-', label = 'Lasso CV Predicted Data', xlim = xlim)
+    df.cv_pred.plot(marker = '.',linestyle = '-', label = 'Lasso CV Predicted Data', xlim = xlim)
 
     #df.model_pred.plot(marker = '.',linestyle = '-', label = 'Linear Predicted Data')
     #axes.set_ylim([0,3])
@@ -152,7 +152,7 @@ def plot_error_vs_features(RMSE, ylim, xlim):
 
 
 def plot_learning_curve(estimator, title, X, y, ylimit, days_tr, train_sizes):
-    plt.figure(facecolor='w', figsize = (8,8), frameon = "True")
+    plt.figure(facecolor='w', figsize = (5,5), frameon = "True")
     a, b, axes, label_size = plot_params()
     plt.title(title, size = label_size)
     if ylimit is not None:

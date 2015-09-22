@@ -41,6 +41,7 @@ def pp_standard_scaler(X):
 
 def scale_features(df):
     df_prescaled = df.copy().astype(float)
+    df_scaled = df.copy().astype(float)
     features = list(df.columns.values)
     #prescale the features
     prescaled, minmax_scale_fit = sci_minmax(df_scaled[features])
@@ -288,7 +289,7 @@ def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features):
 
 def forward_selection_lodo(model, X_tr, y_tr, n_feat, features):
     #initialize the best_features list with the base features to force their inclusion
-    best_features = []
+    best_features = ['day_0', 'day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'day_6', 'xmas']
     RMSE = []
     while len(features) > 0 and len(best_features) < n_feat:
         next_feature, MSE_feat = forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features)
@@ -301,8 +302,6 @@ def forward_selection_lodo(model, X_tr, y_tr, n_feat, features):
         features.remove(next_feature)
     print "Best Features: ", best_features
     return best_features, RMSE
-
-
 
 
 
