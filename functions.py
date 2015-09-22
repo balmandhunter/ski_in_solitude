@@ -5,6 +5,8 @@ import sklearn.preprocessing as pp
 import datetime
 from pyzipcode import ZipCodeDatabase
 from pandas.tseries.holiday import USFederalHolidayCalendar
+from sklearn.metrics import mean_squared_error
+from sklearn.cross_validation import cross_val_predict
 
 
 def choose_date_range(start_yr, start_mon, start_day, end_yr, end_mon, end_day, df_traf):
@@ -31,6 +33,25 @@ def sci_minmax(df_col):
     return minmax_scale_fit.transform(df_col), minmax_scale_fit
 
 
+def pp_standard_scaler(X):
+    standard_scale = pp.StandardScaler()
+    standard_scale_fit = standard_scale.fit(X)
+    return standard_scale_fit.transform(X), standard_scale_fit
+
+
+def scale_features(df):
+    df_prescaled = df.copy().astype(float)
+    features = list(df.columns.values)
+    #prescale the features
+    prescaled, minmax_scale_fit = sci_minmax(df_scaled[features])
+    #Center feature values around zero and make them all have variance on the same order.
+    df_scaled_array, standard_scale_fit = pp_standard_scaler(df_prescaled)
+    df_scaled = pd.DataFrame(df_scaled_array, columns = features)
+    index_col = df.index
+    df_scaled.set_index(index_col, inplace=True)
+    return df_scaled, standard_scale_fit
+
+
 def convert_zip(zipcode):
     zcdb = ZipCodeDatabase()
     try:
@@ -51,14 +72,14 @@ def create_day_of_week_col(df):
 
 def get_holiday_list(start_yr, start_mon, start_day, end_yr, end_mon, end_day):
     calendar = USFederalHolidayCalendar()
-    holiday_list = calendar.holidays(datetime.datetime(2014, 11, 1), datetime.datetime(2015, 5, 1))
+    holiday_list = calendar.holidays(datetime.datetime(2011, 11, 1), datetime.datetime(2015, 5, 1))
     holidays = []
     for holiday in holiday_list:
         holidays.append(holiday)
     return holidays
 
 
-def get_specific_holidays(holidays):
+def get_holiday_names(holidays):
     vet_day = holidays[0]
     thanksgiv = holidays[1]
     xmas = holidays[2]
@@ -130,25 +151,25 @@ def make_xmas_column(df, holiday, hol_name):
     is_holiday = []
     for idx, row in df.iterrows():
         diff = (idx.date() - holiday.date()).days
-        if row['day_4.0'] ==  1 and diff < 0 and diff > -8:
+        if row.filter(regex="day_4").values == 1 and diff < 0 and diff > -8:
             is_holiday.append(1.6)
-        elif row['day_5.0'] ==  1 and diff <= 1 and diff > -7:
+        elif row.filter(regex="day_5").values == 1 and diff <= 1 and diff > -7:
             is_holiday.append(1.5)
-        elif row['day_6.0'] ==  1 and diff < 2 and diff > -6:
+        elif row.filter(regex="day_6").values ==  1 and diff < 2 and diff > -6:
             is_holiday.append(0.4)
-        elif row['day_0.0'] ==  1 and diff < 3 and diff > -5:
+        elif row.filter(regex="day_0").values ==  1 and diff < 3 and diff > -5:
             is_holiday.append(0.6)
-        elif row['day_1.0'] ==  1 and diff < 4 and diff > -4:
+        elif row.filter(regex="day_1").values ==  1 and diff < 4 and diff > -4:
             is_holiday.append(0.8)
-        elif row['day_2.0'] ==  1 and diff < 5 and diff > -3:
+        elif row.filter(regex="day_2").values ==  1 and diff < 5 and diff > -3:
             is_holiday.append(1)
-        elif row['day_3.0'] ==  1 and diff < 6 and diff > -2:
+        elif row.filter(regex="day_3").values ==  1 and diff < 6 and diff > -2:
             is_holiday.append(1.4)
-        elif row['day_4.0'] ==  1 and diff < 7 and diff > -1:
+        elif row.filter(regex="day_4").values ==  1 and diff < 7 and diff > -1:
             is_holiday.append(1.7)
-        elif row['day_5.0'] ==  1 and diff < 8 and diff > 0:
+        elif row.filter(regex="day_5").values ==  1 and diff < 8 and diff > 0:
             is_holiday.append(0.9)
-        elif row['day_6.0'] ==  1 and diff < 9 and diff > 1:
+        elif row.filter(regex="day_6").values ==  1 and diff < 9 and diff > 1:
             is_holiday.append(0)
         else:
             is_holiday.append(0)
@@ -156,16 +177,16 @@ def make_xmas_column(df, holiday, hol_name):
     return df
 
 
-def make_holiday_column(df, holiday, hol_name):
+def make_mlk_column(df, holiday, hol_name):
     is_holiday = []
     for idx, row in df.iterrows():
-        diff = abs(idx.date() - holiday.date()).days
-        if diff > 7:
-            is_holiday.append(0)
+        diff = (idx.date() - holiday.date()).days
+        if diff < 0 and diff >= -3:
+            is_holiday.append(1)
         elif diff == 0:
-            is_holiday.append(7)
+            is_holiday.append(1)
         else:
-            is_holiday.append(7-diff)
+            is_holiday.append(0)
     df[hol_name] = is_holiday
     return df
 
@@ -183,11 +204,11 @@ def make_new_years_column(df, holiday, hol_name):
 
 
 def call_make_holiday_columns(df_all, vet_day, thanksgiv, xmas, new_years, mlk_day, pres_day):
-    df_all = make_holiday_column(df_all, vet_day, 'vet_day')
+    df_all = make_mlk_column(df_all, vet_day, 'vet_day')
     df_all = make_thanks_column(df_all, thanksgiv, 'thanksgiv')
     df_all = make_xmas_column(df_all, xmas, 'xmas')
     df_all = make_new_years_column(df_all, new_years, 'new_years')
-    df_all = make_holiday_column(df_all, mlk_day, 'mlk_day')
+    df_all = make_mlk_column(df_all, mlk_day, 'mlk_day')
     df_all = make_pres_column(df_all, pres_day, 'pres_day')
     return df_all
 
@@ -239,6 +260,47 @@ def find_season_total_snowfall(df):
         count += 1
     df['tot_snow'] = tot_snow
     return df
+
+
+def day_of_week_col(df):
+    day_of_week = []
+    for idx, day in df.iterrows():
+        day_of_week.append(idx.weekday())
+    df['day_of_week'] = day_of_week
+    return df
+
+
+def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features):
+    #initialize min_MSE with a very large number
+    min_score = 100000000000000
+    next_feature = ''
+    for f in features:
+        feat = best_features + [f]
+        mdl = model.fit(X_tr[feat], y_tr)
+        y_pred = mdl.predict(X_tr[feat])
+        score_cv_step = mean_squared_error(y_tr, y_pred)
+        if score_cv_step < min_score:
+            min_score = score_cv_step
+            next_feature = f
+            score_cv = round(min_score, 1)
+    return next_feature, score_cv
+
+
+def forward_selection_lodo(model, X_tr, y_tr, n_feat, features):
+    #initialize the best_features list with the base features to force their inclusion
+    best_features = []
+    RMSE = []
+    while len(features) > 0 and len(best_features) < n_feat:
+        next_feature, MSE_feat = forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features)
+        #add the next feature to the list
+        best_features += [next_feature]
+        RMSE_features = round(np.sqrt(MSE_feat), 1)
+        RMSE.append(RMSE_features)
+        print 'Next best Feature: ', next_feature, ',','RMSE: ', RMSE_features, "#:", len(best_features)
+        #remove the added feature from the list
+        features.remove(next_feature)
+    print "Best Features: ", best_features
+    return best_features, RMSE
 
 
 
