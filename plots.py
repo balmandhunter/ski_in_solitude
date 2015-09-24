@@ -119,7 +119,21 @@ def plot_fitted_and_ref_vs_time(df, ref_column, xlim):
     a, b, axes, label_size = plot_params()
     df[ref_column].plot(marker = '.',linestyle = '-', label = 'Reference Data', xlim = xlim)
     #df.cv_lin_pred.plot(marker = '.',linestyle = '-', label = 'CV Predicted Data')
-    df.cv_pred.plot(marker = '.',linestyle = '-', label = 'Lasso CV Predicted Data', xlim = xlim)
+    df.cv_pred.plot(marker = '.',linestyle = '-', label = 'CV Predicted Data', xlim = xlim)
+
+    #df.model_pred.plot(marker = '.',linestyle = '-', label = 'Linear Predicted Data')
+    #axes.set_ylim([0,3])
+    plt.legend(fontsize = label_size)
+    plt.ylabel('Normalized Skier Numbers', size = label_size)
+    plt.xlabel('Date', size = label_size)
+
+
+def plot_lasso_and_ref_vs_time(df, ref_column, xlim):
+    plt.figure(facecolor='w', figsize = (10,3))
+    a, b, axes, label_size = plot_params()
+    df[ref_column].plot(marker = '.',linestyle = '-', label = 'Reference Data', xlim = xlim)
+    #df.cv_lin_pred.plot(marker = '.',linestyle = '-', label = 'CV Predicted Data')
+    df.lasso_pred.plot(marker = '.',linestyle = '-', label = 'Lasso CV Predicted Data', xlim = xlim)
 
     #df.model_pred.plot(marker = '.',linestyle = '-', label = 'Linear Predicted Data')
     #axes.set_ylim([0,3])
@@ -131,7 +145,7 @@ def plot_fitted_and_ref_vs_time(df, ref_column, xlim):
 def fitted_vs_ref_plot(df, ref_column):
     plt.figure(facecolor='w', figsize = (8,8))
     a, b, axes, label_size = plot_params()
-    plt.plot(df[ref_column], df.model_pred, linestyle = '', marker = '.', alpha = 0.3)
+    plt.plot(df[ref_column], df.lasso_pred, linestyle = '', marker = '.', alpha = 0.3)
     plt.xlabel('Skier Visits', size = label_size)
     plt.ylabel('Predicted Skier Visits', size = label_size)
     plt.plot([0, df.model_pred.max()], [0,df.model_pred.max()])
@@ -177,6 +191,30 @@ def plot_learning_curve(estimator, title, X, y, ylimit, days_tr, train_sizes):
     leg.get_frame().set_facecolor('w')
     #fig.savefig('learning_curve.png', bbox_inches= 'tight')
     return plt
+
+
+def plot_lambda(lambda_ridge, coefs, mean_score_lambda):
+    #plot the coefficients
+    plt.figure(facecolor='w', figsize = (10,5))
+    a, b, axes, label_size = plot_params()
+    #axes.set_ylim(-50, 50)
+    ax = plt.gca()
+    ax.set_color_cycle(['b', 'r', 'g', 'c', 'k', 'y', 'm'])
+
+    ax.plot(lambda_ridge, coefs)
+    ax.set_xscale('log')
+    plt.xlabel('lambda', size = label_size)
+    plt.ylabel('weights', size = label_size)
+    plt.title('coefficients as a function of the regularization', size = label_size)
+    plt.show()
+
+    #plot the results
+    plt.figure(facecolor='w', figsize = (10,5))
+    plt.plot(lambda_ridge, mean_score_lambda)
+    ax = plt.gca()
+    ax.set_xscale('log')
+    plt.xlabel('lambda', size= label_size)
+    plt.ylabel('Custom Score', size = label_size)
 
 
 

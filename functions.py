@@ -63,15 +63,6 @@ def convert_zip(zipcode):
         return np.nan
 
 
-def create_day_of_week_col(df):
-    day_of_week = []
-    for idx, day in df.iterrows():
-        day_of_week.append(idx.weekday())
-
-    df['day_of_week'] = day_of_week
-    return df
-
-
 def make_midweek_col(df_all):
     midweek = []
     for idx, row in df_all.iterrows():
@@ -92,12 +83,12 @@ def get_holiday_list(start_yr, start_mon, start_day, end_yr, end_mon, end_day):
     return holidays
 
 
-def get_holiday_names(holidays):
-    vet_day = holidays[0]
-    thanksgiv = holidays[1]
-    xmas = holidays[2]
-    mlk_day = holidays[4]
-    pres_day = holidays[5]
+def get_holiday_names(holidays, vet_day, thanksgiv, xmas, mlk_day, pres_day):
+    vet_day.append(holidays[0])
+    thanksgiv.append(holidays[1])
+    xmas.append(holidays[2])
+    mlk_day.append(holidays[4])
+    pres_day.append(holidays[5])
     return vet_day, thanksgiv, xmas, mlk_day, pres_day
 
 
@@ -105,28 +96,8 @@ def make_thanks_column(df, holiday, hol_name):
     is_holiday = []
     for idx, row in df.iterrows():
         diff = (idx.date() - holiday.date()).days
-        if diff > 7:
-            is_holiday.append(0)
-        elif diff == 0:
-            is_holiday.append(775)
-        elif diff == -1:
-            is_holiday.append(1622)
-        elif diff == -2:
-            is_holiday.append(367)
-        elif diff == -3:
-            is_holiday.append(-33)
-        elif diff == -4:
-            is_holiday.append(-1098)
-        elif diff == -5:
-            is_holiday.append(739)
-        elif diff == 1:
-            is_holiday.append(1094)
-        elif diff == 2:
-            is_holiday.append(-1576)
-        elif diff == 3:
-            is_holiday.append(-3029)
-        elif diff == 4:
-            is_holiday.append(-397)
+        if diff >= -5 and diff <= 4:
+            is_holiday.append(1)
         else:
             is_holiday.append(0)
     df[hol_name] = is_holiday
@@ -137,22 +108,8 @@ def make_pres_column(df, holiday, hol_name):
     is_holiday = []
     for idx, row in df.iterrows():
         diff = (idx.date() - holiday.date()).days
-        if diff > 7:
-            is_holiday.append(0)
-        elif diff == 0:
-            is_holiday.append(-3989)
-        elif diff == -1:
-            is_holiday.append(-2643)
-        elif diff == -2:
-            is_holiday.append(1519)
-        elif diff == -3:
-            is_holiday.append(4511)
-        elif diff == -4:
-            is_holiday.append(1202)
-        elif diff == -5:
-            is_holiday.append(197)
-        elif diff == -6:
-            is_holiday.append(-60)
+        if diff > -7 and diff <= 0:
+            is_holiday.append(1)
         else:
             is_holiday.append(0)
     df[hol_name] = is_holiday
@@ -163,7 +120,7 @@ def make_xmas_column(df, holiday, hol_name):
     is_holiday = []
     for idx, row in df.iterrows():
         diff = (idx.date() - holiday.date()).days
-        if diff < 7 and diff > 0:
+        if diff < 7 and diff > -1:
             is_holiday.append(1)
         else:
             is_holiday.append(0)
@@ -172,6 +129,18 @@ def make_xmas_column(df, holiday, hol_name):
     df[hol_name] = is_holiday
     return df
 
+def make_before_xmas_column(df, holiday, hol_name):
+    is_holiday = []
+    for idx, row in df.iterrows():
+        diff = (idx.date() - holiday.date()).days
+        if diff >= -6 and diff < -1:
+            is_holiday.append(1)
+        else:
+            is_holiday.append(0)
+    df[hol_name] = is_holiday
+    return df
+    df[hol_name] = is_holiday
+    return df
 
 def make_mlk_column(df, holiday, hol_name):
     is_holiday = []
@@ -192,6 +161,7 @@ def call_make_holiday_columns(df_all, vet_day, thanksgiv, xmas, mlk_day, pres_da
     df_all = make_xmas_column(df_all, xmas, 'xmas')
     df_all = make_mlk_column(df_all, mlk_day, 'mlk_day')
     df_all = make_pres_column(df_all, pres_day, 'pres_day')
+    df_all = make_before_xmas_column(df_all, xmas, 'before_xmas')
     return df_all
 
 
@@ -209,7 +179,7 @@ def make_spring_trailing_weeks(df, holiday, hol_name):
     return df
 
 
-def make_spring_break_col(df, holiday, hol_name):
+def make_spring_break_col(df):
     #3/8-3/30 is spring break
     is_holiday = []
     for idx, row in df.iterrows():
@@ -270,7 +240,7 @@ def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features):
 
 def forward_selection_lodo(model, X_tr, y_tr, n_feat, features):
     #initialize the best_features list with the base features to force their inclusion
-    best_features = []
+    best_features = ['day_5', 'midweek', 'day_0', 'before_xmas']
     RMSE = []
     #r2 = []
     while len(features) > 0 and len(best_features) < n_feat:
@@ -286,6 +256,33 @@ def forward_selection_lodo(model, X_tr, y_tr, n_feat, features):
         features.remove(next_feature)
     print "Best Features: ", best_features
     return best_features, RMSE
+
+
+def find_best_lambda(Model, features, X_tr, y_tr, min_lambda, max_lambda, mult_factor):
+    lambda_ridge = []
+    mean_score_lambda = []
+    i = min_lambda
+    n = 1
+    coefs = []
+    while i < max_lambda:
+        #print 'lambda:', i
+        model = Model(alpha=i)
+        lso = model.fit(X_tr, y_tr)
+        y_pred = cross_val_predict(lso, X_tr, y_tr, cv=10)
+        mean_score_lambda.append(round(np.sqrt(mean_squared_error(y_tr, y_pred)), 0))
+        #print 'score:', mean_score_lambda[n-1]
+        #record the lambda value for this run
+        lambda_ridge.append(i)
+        #record the coefficients for this lambda value
+        coefs.append(model.coef_)
+        i = i * mult_factor
+        n += 1
+
+    #find the lambda value (that produces the lowest cross-validation MSE)
+    best_lambda = lambda_ridge[mean_score_lambda.index(min(mean_score_lambda))]
+
+    print 'Best Lambda:', best_lambda
+    return best_lambda, lambda_ridge, coefs, mean_score_lambda
 
 
 
