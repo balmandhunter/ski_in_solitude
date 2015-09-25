@@ -232,7 +232,7 @@ def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y
         y_pred = cross_val_predict(mdl, X_tr[feat], y_tr, cv=10)
         y_pred_mar = y_pred[mar_pos]
         y_pred_apr = y_pred[apr_pos]
-        score_cv_step = (mean_squared_error(y_tr, y_pred) + mean_squared_error(y_tr_mar, y_pred_mar) + mean_squared_error(y_tr_apr, y_pred_apr))
+        score_cv_step = (mean_squared_error(y_tr, y_pred) + mean_squared_error(y_tr_mar, y_pred_mar) + 2*mean_squared_error(y_tr_apr, y_pred_apr))
         MSE_step = mean_squared_error(y_tr, y_pred)
         if score_cv_step < min_score:
             min_score = score_cv_step
@@ -285,9 +285,26 @@ def find_best_lambda(Model, features, X_tr, y_tr, min_lambda, max_lambda, mult_f
     #find the lambda value (that produces the lowest cross-validation MSE)
     best_lambda = lambda_ridge[mean_score_lambda.index(min(mean_score_lambda))]
 
-    print 'Best Lambda:', best_lambda
+    print 'Best Lambda:', round(best_lambda, 0)
     return best_lambda, lambda_ridge, coefs, mean_score_lambda
 
+
+def get_holdout_RMSE(model, feat, df_tr, df_h):
+    df_hold = pd.concat([df_h.skiers, df_h[feat]], axis=1)
+    X_tr = df_tr[feat]
+    y_tr = df_tr.skiers.values
+    X_h = df_h[feat]
+    y_h = df_h.skiers.values
+    mdl = model.fit(X_tr, y_tr)
+    cv_pred = cross_val_predict(model, X_tr, y_tr, cv = 10)
+    pred_h = mdl.predict(X_h)
+    df_cv = df_tr
+    df_cv['pred'] = cv_pred
+    df_hold['pred'] = pred_h
+    RMSE_h = round(np.sqrt(mean_squared_error(y_h, pred_h)), 1)
+    RMSE_CV = round(np.sqrt(mean_squared_error(y_tr, cv_pred)), 1)
+    print 'CV RMSE:', RMSE_CV, ', ', 'Holdout RMSE:', RMSE_h
+    return RMSE_h, RMSE_CV, df_hold, df_cv
 
 
 if __name__ == "__main__":
