@@ -120,7 +120,7 @@ def make_xmas_column(df, holiday, hol_name):
     is_holiday = []
     for idx, row in df.iterrows():
         diff = (idx.date() - holiday.date()).days
-        if diff < 7 and diff > -1:
+        if diff < 7 and diff > -2:
             is_holiday.append(1)
         else:
             is_holiday.append(0)
@@ -222,7 +222,7 @@ def day_of_week_col(df):
     return df
 
 
-def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features):
+def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y_tr_mar, y_tr_apr, mar_pos, apr_pos):
     #initialize min_MSE with a very large number
     min_score = 1000000000000000000
     next_feature = ''
@@ -230,21 +230,25 @@ def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features):
         feat = best_features + [f]
         mdl = model.fit(X_tr[feat], y_tr)
         y_pred = cross_val_predict(mdl, X_tr[feat], y_tr, cv=10)
-        score_cv_step = mean_squared_error(y_tr, y_pred)
+        y_pred_mar = y_pred[mar_pos]
+        y_pred_apr = y_pred[apr_pos]
+        score_cv_step = (mean_squared_error(y_tr, y_pred) + mean_squared_error(y_tr_mar, y_pred_mar) + mean_squared_error(y_tr_apr, y_pred_apr))
+        MSE_step = mean_squared_error(y_tr, y_pred)
         if score_cv_step < min_score:
             min_score = score_cv_step
             next_feature = f
             score_cv = round(min_score, 1)
-    return next_feature, score_cv
+            MSE = round(MSE_step, 1)
+    return next_feature, MSE
 
 
-def forward_selection_lodo(model, X_tr, y_tr, n_feat, features):
+def forward_selection_lodo(model, X_tr, y_tr, n_feat, features, y_tr_mar, y_tr_apr, mar_pos, apr_pos):
     #initialize the best_features list with the base features to force their inclusion
-    best_features = ['day_5', 'midweek', 'day_0', 'before_xmas']
+    best_features = ['day_5', 'midweek', 'day_0', 'xmas', 'spring_break', 'tot_snow']
     RMSE = []
     #r2 = []
     while len(features) > 0 and len(best_features) < n_feat:
-        next_feature, MSE_feat = forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features)
+        next_feature, MSE_feat = forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y_tr_mar, y_tr_apr, mar_pos, apr_pos)
         #add the next feature to the list
         best_features += [next_feature]
         RMSE_features = round(np.sqrt(MSE_feat), 1)

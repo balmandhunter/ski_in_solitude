@@ -114,14 +114,12 @@ def make_bar_chart(crowd, y_label, dates):
     return fig
 
 
-def plot_fitted_and_ref_vs_time(df, ref_column, xlim):
-    plt.figure(facecolor='w', figsize = (10,3))
+def plot_fitted_and_ref_vs_time(df, ref_column, xlim, RMSE):
+    plt.figure(facecolor='w', figsize = (15,10))
     a, b, axes, label_size = plot_params()
-    df[ref_column].plot(marker = '.',linestyle = '-', label = 'Reference Data', xlim = xlim)
-    #df.cv_lin_pred.plot(marker = '.',linestyle = '-', label = 'CV Predicted Data')
-    df.cv_pred.plot(marker = '.',linestyle = '-', label = 'CV Predicted Data', xlim = xlim)
-
-    #df.model_pred.plot(marker = '.',linestyle = '-', label = 'Linear Predicted Data')
+    df[ref_column].plot(marker = 'o',linestyle = '-', label = 'Reference Data', xlim = xlim)
+    df.pred.plot(marker = 'o',linestyle = '', label = 'Predicted Data', xlim = xlim)
+    plt.errorbar(df.index, df.pred, yerr=RMSE, xerr=None, color='w')
     #axes.set_ylim([0,3])
     plt.legend(fontsize = label_size)
     plt.ylabel('Normalized Skier Numbers', size = label_size)
