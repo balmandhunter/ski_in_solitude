@@ -114,15 +114,15 @@ def make_bar_chart(crowd, y_label, dates):
     return fig
 
 
-def plot_fitted_and_ref_vs_time(df, ref_column, xlim, RMSE, fig_size):
+def plot_fitted_and_ref_vs_time(df, ref_column, xlim, RMSE, fig_size, y_title):
     plt.figure(facecolor='w', figsize = fig_size)
     a, b, axes, label_size = plot_params()
-    df[ref_column].plot(marker = 'o',linestyle = '-', label = 'Reference Data', xlim = xlim)
-    df.pred.plot(marker = 'o',linestyle = '-', label = 'Predicted Data', xlim = xlim)
+    df[ref_column].plot(marker = 'o',linestyle = '-', label = 'Actual', xlim = xlim)
+    df.pred.plot(marker = 'o',linestyle = '-', label = 'Predicted', xlim = xlim)
     #plt.errorbar(df.index, df.pred, yerr=RMSE, xerr=None, color='w')
     #axes.set_ylim([0,3])
-    plt.legend(fontsize = label_size)
-    plt.ylabel('Normalized Skier Numbers', size = label_size)
+    plt.legend(fontsize = label_size, loc = 0)
+    plt.ylabel(y_title, size = label_size)
     plt.xlabel('Date', size = label_size)
 
 
@@ -135,18 +135,18 @@ def plot_lasso_and_ref_vs_time(df, ref_column, xlim):
 
     #df.model_pred.plot(marker = '.',linestyle = '-', label = 'Linear Predicted Data')
     #axes.set_ylim([0,3])
-    plt.legend(fontsize = label_size)
-    plt.ylabel('Normalized Skier Numbers', size = label_size)
+    plt.legend(fontsize = label_size, loc = 2)
+    plt.ylabel('Number of Cars at Resort', size = label_size)
     plt.xlabel('Date', size = label_size)
 
 
-def fitted_vs_ref_plot(df, ref_column):
+def fitted_vs_ref_plot(df, ref_column, y_label, x_label):
     plt.figure(facecolor='w', figsize = (8,8))
     a, b, axes, label_size = plot_params()
-    plt.plot(df[ref_column], df.pred, linestyle = '', marker = '.', alpha = 0.3)
-    plt.xlabel('Skier Visits', size = label_size)
-    plt.ylabel('Predicted Skier Visits', size = label_size)
-    plt.plot([0, df.model_pred.max()], [0,df.model_pred.max()])
+    plt.plot(df[ref_column], df.pred, linestyle = '', marker = '.', alpha = 0.8)
+    plt.xlabel(x_label, size = label_size)
+    plt.ylabel(y_label, size = label_size)
+    plt.plot([0, df.pred.max()], [0,df.pred.max()])
     #axes.set_ylim([-20,100])
 
 
@@ -159,8 +159,6 @@ def plot_error_vs_features(RMSE, ylim, xlim):
     #axes.set_xlim(xlim)
     plt.xlabel('Number of Features', size = label_size)
     plt.ylabel('Error', size = label_size)
-    #plt.grid(b=True, which='major', color='g', linestyle='-.')
-    plt.legend(fontsize = label_size, loc = "best")
 
 
 def plot_learning_curve(estimator, title, X, y, ylimit, days_tr, train_sizes):
@@ -182,8 +180,8 @@ def plot_learning_curve(estimator, title, X, y, ylimit, days_tr, train_sizes):
         alpha=0.1, color="r")
     plt.fill_between(train_sizes, valid_scores_mean - valid_scores_std, valid_scores_mean + valid_scores_std,
         alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r", label="Training RMSE")
-    plt.plot(train_sizes, valid_scores_mean, 'o-', color="g", label="Cross-validation RMSE")
+    plt.plot(train_sizes, train_scores_mean, 'o-', color="r", label="Training MSE")
+    plt.plot(train_sizes, valid_scores_mean, 'o-', color="g", label="Cross-validation MSE")
 
     leg = plt.legend(loc="best", fontsize = label_size, frameon = 'True')
     leg.get_frame().set_facecolor('w')

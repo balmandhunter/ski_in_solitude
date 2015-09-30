@@ -8,6 +8,8 @@ from pandas.tseries.holiday import USFederalHolidayCalendar
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 from sklearn.cross_validation import cross_val_predict
+import statsmodels.api as sm
+from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
 
 def choose_date_range(start_yr, start_mon, start_day, end_yr, end_mon, end_day, df_traf):
@@ -28,10 +30,21 @@ def sum_morning_evening_and_drop_hourly(df_traf_prim, df_traf_sec):
     return df_traf_prim, df_traf_sec
 
 
-def sci_minmax(df_col):
-    minmax_scale = pp.MinMaxScaler(feature_range=(0, 1), copy=True)
-    minmax_scale_fit = minmax_scale.fit(df_col)
-    return minmax_scale_fit.transform(df_col), minmax_scale_fit
+def make_squared(df, features):
+    for feat1 in features:
+        df[feat1 + '_sq'] = df[feat1]**2
+        #df[feat1 + '_cu'] = df[feat1]**3
+        df[feat1 + '_sqrt'] = np.sqrt(df[feat1])
+        df['ln_' + feat1] = np.log(df[feat1])
+    return df
+
+
+def scale_skiers(df, range, ref_column):
+    df_scaled = df.copy().astype(float)
+    minmax_scale = pp.MinMaxScaler(feature_range=range, copy=True)
+    minmax_scale_fit = minmax_scale.fit(df[ref_column])
+    df_scaled[ref_column] = minmax_scale_fit.transform(df[ref_column])
+    return df_scaled
 
 
 def pp_standard_scaler(X):
@@ -41,13 +54,10 @@ def pp_standard_scaler(X):
 
 
 def scale_features(df):
-    df_prescaled = df.copy().astype(float)
     df_scaled = df.copy().astype(float)
     features = list(df.columns.values)
-    #prescale the features
-    prescaled, minmax_scale_fit = sci_minmax(df_scaled[features])
     #Center feature values around zero and make them all have variance on the same order.
-    df_scaled_array, standard_scale_fit = pp_standard_scaler(df_prescaled)
+    df_scaled_array, standard_scale_fit = pp_standard_scaler(df)
     df_scaled = pd.DataFrame(df_scaled_array, columns = features)
     index_col = df.index
     df_scaled.set_index(index_col, inplace=True)
@@ -120,7 +130,7 @@ def make_xmas_column(df, holiday, hol_name):
     is_holiday = []
     for idx, row in df.iterrows():
         diff = (idx.date() - holiday.date()).days
-        if diff < 7 and diff > -2:
+        if diff < 8 and diff > -2:
             is_holiday.append(1)
         else:
             is_holiday.append(0)
@@ -133,7 +143,7 @@ def make_before_xmas_column(df, holiday, hol_name):
     is_holiday = []
     for idx, row in df.iterrows():
         diff = (idx.date() - holiday.date()).days
-        if diff >= -6 and diff < -1:
+        if diff >= -6 and diff <= -2:
             is_holiday.append(1)
         else:
             is_holiday.append(0)
@@ -232,7 +242,8 @@ def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y
         y_pred = cross_val_predict(mdl, X_tr[feat], y_tr, cv=10)
         y_pred_mar = y_pred[mar_pos]
         y_pred_apr = y_pred[apr_pos]
-        score_cv_step = (mean_squared_error(y_tr, y_pred) + mean_squared_error(y_tr_mar, y_pred_mar) + 2*mean_squared_error(y_tr_apr, y_pred_apr))
+        #score_cv_step = mean_squared_error(y_tr, y_pred) + mean_squared_error(y_tr_mar, y_pred_mar) + mean_squared_error(y_tr_apr, y_pred_apr)
+        score_cv_step = mean_squared_error(y_tr, y_pred) + mean_squared_error(y_tr_mar, y_pred_mar) + mean_squared_error(y_tr_apr, y_pred_apr)
         MSE_step = mean_squared_error(y_tr, y_pred)
         if score_cv_step < min_score:
             min_score = score_cv_step
@@ -244,7 +255,7 @@ def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y
 
 def forward_selection_lodo(model, X_tr, y_tr, n_feat, features, y_tr_mar, y_tr_apr, mar_pos, apr_pos):
     #initialize the best_features list with the base features to force their inclusion
-    best_features = ['day_5', 'midweek', 'day_0', 'xmas', 'spring_break', 'tot_snow']
+    best_features = []
     RMSE = []
     #r2 = []
     while len(features) > 0 and len(best_features) < n_feat:
@@ -289,12 +300,12 @@ def find_best_lambda(Model, features, X_tr, y_tr, min_lambda, max_lambda, mult_f
     return best_lambda, lambda_ridge, coefs, mean_score_lambda
 
 
-def get_holdout_RMSE(model, feat, df_tr, df_h):
-    df_hold = pd.concat([df_h.skiers, df_h[feat]], axis=1)
+def get_holdout_RMSE(model, feat, df_tr, df_h, ref_column):
+    df_hold = pd.concat([df_h[ref_column], df_h[feat]], axis=1)
     X_tr = df_tr[feat]
-    y_tr = df_tr.skiers.values
+    y_tr = df_tr[ref_column].values
     X_h = df_h[feat]
-    y_h = df_h.skiers.values
+    y_h = df_h[ref_column].values
     mdl = model.fit(X_tr, y_tr)
     cv_pred = cross_val_predict(model, X_tr, y_tr, cv = 10)
     pred_h = mdl.predict(X_h)
@@ -305,6 +316,14 @@ def get_holdout_RMSE(model, feat, df_tr, df_h):
     RMSE_CV = round(np.sqrt(mean_squared_error(y_tr, cv_pred)), 1)
     print 'CV RMSE:', RMSE_CV, ', ', 'Holdout RMSE:', RMSE_h
     return RMSE_h, RMSE_CV, df_hold, df_cv
+
+
+def find_training_and_hold_sets(df_tr, df_h, features, ref_column):
+    X_tr = df_tr[features]
+    y_tr = df_tr[ref_column].values
+    X_h = df_h[features]
+    y_h = df_h[ref_column].values
+    return X_tr, y_tr, X_h, y_h
 
 
 if __name__ == "__main__":
