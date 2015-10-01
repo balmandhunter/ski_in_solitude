@@ -43,8 +43,8 @@ def scale_skiers(df, range, ref_column):
     df_scaled = df.copy().astype(float)
     minmax_scale = pp.MinMaxScaler(feature_range=range, copy=True)
     minmax_scale_fit = minmax_scale.fit(df[ref_column])
-    df_scaled[ref_column] = minmax_scale_fit.transform(df[ref_column])
-    return df_scaled
+    scaled_skiers = minmax_scale_fit.transform(df[ref_column])
+    return scaled_skiers
 
 
 def pp_standard_scaler(X):

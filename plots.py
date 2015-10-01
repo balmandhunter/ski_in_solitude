@@ -6,7 +6,7 @@ from sklearn.learning_curve import learning_curve
 
 
 def plot_params():
-    size = 18
+    size = 22
     a = plt.rc('xtick', labelsize = size)
     b = plt.rc('ytick', labelsize = size)
     return a, b, plt.gca(), size
@@ -151,7 +151,7 @@ def fitted_vs_ref_plot(df, ref_column, y_label, x_label):
 
 
 def plot_error_vs_features(RMSE, ylim, xlim):
-    plt.figure(facecolor='w', figsize = (10,5))
+    plt.figure(facecolor='w', figsize = (6,5))
     a, b, axes, label_size = plot_params()
     x = range(1, len(RMSE)+1)
     plt.plot(x, RMSE, marker = '.', markersize = 20, label='RMSE')
@@ -162,7 +162,7 @@ def plot_error_vs_features(RMSE, ylim, xlim):
 
 
 def plot_learning_curve(estimator, title, X, y, ylimit, days_tr, train_sizes):
-    plt.figure(facecolor='w', figsize = (5,5), frameon = "True")
+    plt.figure(facecolor='w', figsize = (6,5), frameon = "True")
     a, b, axes, label_size = plot_params()
     plt.title(title, size = label_size)
     if ylimit is not None:
@@ -180,10 +180,10 @@ def plot_learning_curve(estimator, title, X, y, ylimit, days_tr, train_sizes):
         alpha=0.1, color="r")
     plt.fill_between(train_sizes, valid_scores_mean - valid_scores_std, valid_scores_mean + valid_scores_std,
         alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r", label="Training MSE")
-    plt.plot(train_sizes, valid_scores_mean, 'o-', color="g", label="Cross-validation MSE")
+    plt.plot(train_sizes, train_scores_mean, 'o-', color="r", label="Training")
+    plt.plot(train_sizes, valid_scores_mean, 'o-', color="g", label="Cross-validation")
 
-    leg = plt.legend(loc="best", fontsize = label_size, frameon = 'True')
+    leg = plt.legend(loc= 4, fontsize = label_size, frameon = 'True')
     leg.get_frame().set_facecolor('w')
     #fig.savefig('learning_curve.png', bbox_inches= 'tight')
     return plt
@@ -213,6 +213,15 @@ def plot_lambda(lambda_ridge, coefs, mean_score_lambda, ylim):
     plt.ylabel('Custom Score', size = label_size)
 
 
+def plot_resid_vs_time(df):
+    resid = df.skiers - df.pred
+    plt.figure(facecolor='w', figsize = (15,5))
+    a, b, axes, label_size = plot_params()
+    #xlim = assign_pod_calibration_times(pod_num, time_chunk)
+    resid.plot(linestyle = '',marker = '.')
+    #plt.plot([0,0],[70,0])
+    plt.xlabel('Date', size = label_size)
+    plt.ylabel('Residuals', size = label_size)
 
 if __name__ == "__main__":
     import sys
