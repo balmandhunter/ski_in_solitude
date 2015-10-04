@@ -9,7 +9,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 from sklearn.cross_validation import cross_val_predict
 import statsmodels.api as sm
-from statsmodels.sandbox.regression.predstd import wls_prediction_std
+from sklearn.cross_validation import Bootstrap
+from sklearn.ensemble import RandomForestRegressor
+
 
 
 def choose_date_range(start_yr, start_mon, start_day, end_yr, end_mon, end_day, df_traf):
@@ -324,6 +326,37 @@ def find_training_and_hold_sets(df_tr, df_h, features, ref_column):
     X_h = df_h[features]
     y_h = df_h[ref_column].values
     return X_tr, y_tr, X_h, y_h
+
+
+def add_pred_and_conf_int_to_df(df_pred, df_fut):
+    pred_mean = []
+    pred_std = []
+    for idx, row in df_pred.iterrows():
+        pred_mean.append(round(row.mean(),0))
+        pred_std.append(round(row.std(),1))
+    df_fut['pred'] = pred_mean
+    df_fut['st_dev'] = pred_std
+    df_fut['lower'] = df_fut['pred'] - df_fut['st_dev']*2
+    df_fut['upper'] = df_fut['pred'] + df_fut['st_dev']*2
+    return df_fut
+
+
+def run_bootstrap_model(df_cv, model, best_features, X_fut, ref_column):
+    bs = Bootstrap(len(df_cv), n_iter=1000, train_size=int(len(df_cv)*3/4), test_size=int(len(df_cv)*1/4))
+    count = 1
+    first = True
+    for train_index, test_index in bs:
+        X_tr = df_cv.ix[train_index][best_features]
+        y_tr = df_cv.ix[train_index][ref_column]
+        mdl = model.fit(X_tr, y_tr)
+        pred = mdl.predict(X_fut)
+        if first:
+            df_pred = pd.DataFrame(pred)
+            first = False
+        else:
+            df_pred[count] = pred
+        count += 1
+    return df_pred
 
 
 if __name__ == "__main__":
