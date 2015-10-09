@@ -1,1 +1,1 @@
-# Berkeley-Almand-Hunter
+The code in this repository was used to predict crowds and open terrain at a ski resort. "crowd_model.ipnyb" is the main notebook for the crowd predictions, and "percent-open-model" is the main notebook for the open terrain prediction.
