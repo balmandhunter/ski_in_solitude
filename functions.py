@@ -21,6 +21,14 @@ def separate_traffic_directions(df_traf):
     return df_traf[df_traf.COUNTDIR == 'P'], df_traf[df_traf.COUNTDIR == 'S']
 
 
+def find_training_and_hold_sets(df_tr, df_h, features):
+    X_tr = df_tr[features]
+    y_tr = df_tr.skiers.values
+    X_h = df_h[features]
+    y_h = df_h.skiers.values
+    return X_tr, y_tr, X_h, y_h
+
+
 def sum_morning_evening_and_drop_hourly(df_traf_prim, df_traf_sec):
     df_traf_prim['morning_east'] = df_traf_prim.HOUR0 + df_traf_prim.HOUR1 + df_traf_prim.HOUR3 + df_traf_prim.HOUR4 + df_traf_prim.HOUR5 + df_traf_prim.HOUR6 + df_traf_prim.HOUR7 + df_traf_prim.HOUR8 + df_traf_prim.HOUR9 + df_traf_prim.HOUR10 + df_traf_prim.HOUR11
     df_traf_prim['evening_east'] = df_traf_prim.HOUR12 + df_traf_prim.HOUR13 + df_traf_prim.HOUR14 + df_traf_prim.HOUR15 + df_traf_prim.HOUR16 + df_traf_prim.HOUR17 + df_traf_prim.HOUR18 + df_traf_prim.HOUR19 + df_traf_prim.HOUR20 + df_traf_prim.HOUR21 + df_traf_prim.HOUR22 + df_traf_prim.HOUR23
@@ -34,7 +42,6 @@ def sum_morning_evening_and_drop_hourly(df_traf_prim, df_traf_sec):
 def make_squared(df, features):
     for feat1 in features:
         df[feat1 + '_sq'] = df[feat1]**2
-        #df[feat1 + '_cu'] = df[feat1]**3
         df[feat1 + '_sqrt'] = np.sqrt(df[feat1])
         df['ln_' + feat1] = np.log(df[feat1])
     return df
