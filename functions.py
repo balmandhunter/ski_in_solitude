@@ -13,7 +13,6 @@ from sklearn.cross_validation import Bootstrap
 from sklearn.ensemble import RandomForestRegressor
 
 
-
 def choose_date_range(start_yr, start_mon, start_day, end_yr, end_mon, end_day, df_traf):
     return df_traf[(df_traf.index >= datetime.datetime(start_yr, start_mon, start_day)) & (df_traf.index < datetime.datetime(end_yr, end_mon, end_day))]
 
@@ -234,18 +233,19 @@ def day_of_week_col(df):
     return df
 
 
-def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y_tr_mar, y_tr_apr, mar_pos, apr_pos):
+def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y_tr_mar, y_tr_apr, y_tr_dec, mar_pos, apr_pos, dec_pos):
     #initialize min_MSE with a very large number
     min_score = 1000000000000000000
     next_feature = ''
     for f in features:
         feat = best_features + [f]
         mdl = model.fit(X_tr[feat], y_tr)
-        y_pred = cross_val_predict(mdl, X_tr[feat], y_tr, cv=10)
+        y_pred = cross_val_predict(mdl, X_tr[feat], y_tr, cv=20)
+        y_pred_dec = y_pred[dec_pos]
         y_pred_mar = y_pred[mar_pos]
         y_pred_apr = y_pred[apr_pos]
-        #score_cv_step = mean_squared_error(y_tr, y_pred) + mean_squared_error(y_tr_mar, y_pred_mar) + mean_squared_error(y_tr_apr, y_pred_apr)
-        score_cv_step = mean_squared_error(y_tr, y_pred) + mean_squared_error(y_tr_mar, y_pred_mar) + mean_squared_error(y_tr_apr, y_pred_apr)
+        score_cv_step = mean_squared_error(y_tr, y_pred)  + mean_squared_error(y_tr[y_tr<20], y_pred[y_tr<20]) + mean_squared_error(y_tr[y_tr>60], y_pred[y_tr>60])
+        # +  mean_squared_error(y_tr_dec, y_pred_dec)
         MSE_step = mean_squared_error(y_tr, y_pred)
         if score_cv_step < min_score:
             min_score = score_cv_step
@@ -255,13 +255,13 @@ def forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y
     return next_feature, MSE
 
 
-def forward_selection_lodo(model, X_tr, y_tr, n_feat, features, y_tr_mar, y_tr_apr, mar_pos, apr_pos):
+def forward_selection_lodo(model, X_tr, y_tr, n_feat, features, y_tr_mar, y_tr_apr, y_tr_dec, mar_pos, apr_pos, dec_pos):
     #initialize the best_features list with the base features to force their inclusion
     best_features = []
     RMSE = []
     #r2 = []
     while len(features) > 0 and len(best_features) < n_feat:
-        next_feature, MSE_feat = forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y_tr_mar, y_tr_apr, mar_pos, apr_pos)
+        next_feature, MSE_feat = forward_selection_step(model, X_tr, y_tr, n_feat, features, best_features, y_tr_mar, y_tr_apr, y_tr_dec, mar_pos, apr_pos, dec_pos)
         #add the next feature to the list
         best_features += [next_feature]
         RMSE_features = round(np.sqrt(MSE_feat), 1)
