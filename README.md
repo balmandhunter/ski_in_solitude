@@ -1,1 +1,1 @@
-The code in this repository was used to predict crowds and open terrain at a ski resort. "crowd_model.ipnyb" is the main notebook for the crowd predictions, and "percent-open-model" is the main notebook for the open terrain prediction.
+The code in this repository was used to predict crowds and open terrain at Winter Park, CO, and the results are available at www.skiinsolitude.com. "crowd_model.ipnyb" is the main notebook for the crowd predictions, and "percent-open-model" is the main notebook for the open terrain prediction.
