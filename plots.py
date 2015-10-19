@@ -213,6 +213,23 @@ def plot_lambda(lambda_ridge, coefs, mean_score_lambda, ylim):
     plt.ylabel('Custom Score', size = label_size)
 
 
+def plot_cv_fit_and_learn_curve_at_each_step(df_tr, X_tr, y_tr, lin_regr, ref_column):
+    i = 20
+    while i < 30:
+        num_good_feat = i
+        df_reg = pd.concat([df_tr.skiers, df_tr[fs_features[0:i]]], axis=1)
+        X_tr = df_tr[fs_features[0:i]]
+        y_tr = df_tr.skiers.values
+        mdl = lin_regr.fit(X_tr, y_tr)
+        cv_pred = cross_val_predict(lin_regr, X_tr, y_tr, cv = 10)
+        df_reg['pred'] = cv_pred
+        plot_fitted_and_ref_vs_time(df_reg, ref_column, ['2011-11-1 00:00:00', '2012-05-1 00:00:00'], 1200, (15, 4), '% of Maximum Crowd')
+        plot_fitted_and_ref_vs_time(df_reg, ref_column, ['2014-11-1 00:00:00', '2015-05-1 00:00:00'], 1200, (15,4), '% of Maximum Crowd')
+        plot_fitted_and_ref_vs_time(df_reg, ref_column, ['2013-11-1 00:00:00', '2014-05-1 00:00:00'], 1200, (15,4), '% of Maximum Crowd')
+        plot_learning_curve(lin_regr, "Number of features = " + str(i), df_tr[fs_features[:i]].values, df_tr[ref_column].values, (0,200), 5, np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.85, 0.9, 0.95,0.97, 1.0]))
+        i += 1
+
+
 def plot_resid_vs_time(df):
     resid = df.skiers - df.pred
     plt.figure(facecolor='w', figsize = (15,5))
